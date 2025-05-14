@@ -1,0 +1,58 @@
+*{margin: 0px;padding: 0px;}
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #469c58;
+}
+header div{display: inline;}
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+}
+
+nav ul li {
+    padding: 10px 20px;
+}
+nav ul li a {
+    color: white;
+    text-decoration: none;
+}
+ .logo img {
+        height: 50px;
+		width: 50px;
+		border-radius: 20px;
+		margin:5px 0 0 5px ;
+    }
+    .auth-buttons {
+    display: flex;
+    justify-content: flex-end; /* Aligns to the right */
+    gap: 15px; /* Adds space between buttons */
+}
+
+.auth-buttons a {
+    color: white;
+    text-decoration: none;
+    padding: 10px 20px;
+    background-color: darkcyan;
+    border-radius: 5px;
+}
+.sidebar {
+    width: 200px;
+    background-color: #f9f9f9;
+    padding: 15px;
+}
+
+/* Main content gets margin so it's not under the sidebar */
+.main-content {
+    flex-grow: 1;
+    padding: 20px;
+}
+.search-bar button {
+    padding: 5px 10px;
+}
+.search-bar input {
+    padding: 5px;
+    border-radius: 5px;
+}
