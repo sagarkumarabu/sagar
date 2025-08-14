@@ -10,6 +10,10 @@ if ($result->num_rows > 0) {
         echo "<img src='" . $row['image'] . "' alt='" . $row['name'] . "'>";
         echo "<h3>" . $row['name'] . "</h3>";
         echo "<p>₹" . $row['price'] . "</p>";
+           echo "<form action='buy.php' method='POST'>";
+        echo "<input type='hidden' name='product_id' value='" . $row['id'] . "'>";
+        echo "<button type='submit'>Buy Now</button>";
+        echo "</form>";
         echo "</div>";
     }
 } else {
@@ -18,3 +22,4 @@ if ($result->num_rows > 0) {
 
 $conn->close();
 ?>
+
