@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>product sell</title>
+    <title>Product sell</title>
     <link rel="stylesheet" href="style2.css">
-    <!-- Ensure you're loading the complete Font Awesome kit -->
+   
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
  rel="stylesheet">
 
@@ -62,6 +62,42 @@
     <div class="slide"><img src="nepal.jpg" alt="Banner 3"></div>
   </div>
 </div>
+  <?php
+        // ====== PHP code to show products by category ======
+    include 'config.php';
+        $categories = ['Electronics', 'Clothing', 'Kitchen', 'Beauty', 'Sports'];
+
+        foreach ($categories as $category) {
+            echo "<section class='category-section'>";
+            echo "<h2>$category</h2>";
+            echo "<div class='product-grid'>";
+
+            $sql = "SELECT * FROM products WHERE category = '$category' LIMIT 4";
+            $result = $conn->query($sql);
+
+            if ($result && $result->num_rows > 0) {
+                while($row = $result->fetch_assoc()) {
+                    echo "<div class='product-card'>";
+                    echo "<img src='{$row['image']}' alt='{$row['name']}'>";
+                    echo "<h3>{$row['name']}</h3>";
+                    echo "<p>\${$row['price']}</p>";
+                     echo "<form action='buy.php' method='POST'>";
+        echo "<input type='hidden' name='product_id' value='" . $row['id'] . "'>";
+        echo "<button type='submit'>Buy Now</button>";
+        echo "</form>";
+                    echo "</div>";
+                }
+            } else {
+                echo "<p>No products available.</p>";
+            }
+
+            echo "</div>";
+            echo "<a class='view-more' href='" . strtolower($category) . ".php'>View More</a>";
+            echo "</section><hr>";
+        }
+
+        $conn->close();
+        ?>
     </div>
 </div>
 <script src="script.js"></script>
