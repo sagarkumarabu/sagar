@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HPL Auto-Optimizer (mm)</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; line-height: 1.6; padding: 20px; max-width: 950px; margin: auto; background: #f0f2f5; }
+        .container { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1 { color: #1a73e8; text-align: center; margin-bottom: 30px; }
+        .input-group { margin-bottom: 20px; display: flex; flex-direction: column; width: 200px; }
+        label { margin-bottom: 8px; font-weight: 600; color: #444; }
+        input { padding: 12px; border: 1.5px solid #ddd; border-radius: 6px; font-size: 16px; }
+        .item-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .item-table th, .item-table td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        .item-table input { width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-add { background: #34a853; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-calc { background: #1a73e8; color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 18px; font-weight: bold; }
+        .result-box { margin-top: 25px; padding: 25px; border-radius: 8px; display: none; }
+        .best-option { background: #e8f0fe; border-left: 5px solid #1a73e8; }
+        .waste-text { color: #d93025; font-weight: bold; }
+        .recommendation-badge { display: inline-block; background: #1a73e8; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.9rem; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>HPL Multi-Component Planner</h1>
+    
+    <div class="input-group">
+        <label>Saw Kerf (mm)</label>
+        <input type="number" id="kerf" value="3" step="0.1">
+    </div>
+
+    <table class="item-table">
+        <thead>
+            <tr>
+                <th>Component</th>
+                <th>Width (mm)</th>
+                <th>Height (mm)</th>
+                <th>Qty</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="itemBody">
+            <tr>
+                <td><input type="text" value="Door" class="item-name"></td>
+                <td><input type="number" class="item-w" placeholder="mm"></td>
+                <td><input type="number" class="item-h" placeholder="mm"></td>
+                <td><input type="number" value="1" class="item-q"></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <button class="btn-add" onclick="addRow()">+ Add Item</button>
+    <button class="btn-calc" onclick="calculateOptimization()" style="margin-top:20px;">Find Best Sheet Size</button>
+
+    <div id="results" class="result-box best-option">
+        <div class="recommendation-badge">Recommended Sheet Size</div>
+        <div style="font-size: 1.4rem; margin-bottom: 10px;">
+            <strong>Use:</strong> <span id="bestSheet" style="color: #1a73e8;">-</span>
+        </div>
+        <div><strong>Sheets Required:</strong> <span id="sheetsNeeded">0</span></div>
+        <div>Total Cutting Area: <span id="usedArea">0</span> m²</div>
+        <div class="waste-text">Waste Area: <span id="wasteArea">0</span> m²</div>
+        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ccc;">
+        <div id="comparison" style="font-size: 0.9rem; color: #555;"></div>
+    </div>
+</div>
+
+<script>
+function addRow() {
+    const tbody = document.getElementById('itemBody');
+    const row = `<tr>
+        <td><input type="text" placeholder="Divider/Urinal" class="item-name"></td>
+        <td><input type="number" class="item-w" placeholder="mm"></td>
+        <td><input type="number" class="item-h" placeholder="mm"></td>
+        <td><input type="number" value="1" class="item-q"></td>
+        <td><button onclick="this.closest('tr').remove()" style="background:none; border:none; color:red; cursor:pointer; font-size:20px;">&times;</button></td>
+    </tr>`;
+    tbody.insertAdjacentHTML('beforeend', row);
+}
+
+function calculateOptimization() {
+    const kerf = parseFloat(document.getElementById('kerf').value) || 0;
+    const widths = document.querySelectorAll('.item-w');
+    const heights = document.querySelectorAll('.item-h');
+    const quantities = document.querySelectorAll('.item-q');
+
+    let totalAreaNeeded = 0;
+    for (let i = 0; i < widths.length; i++) {
+        let w = (parseFloat(widths[i].value) || 0) + kerf;
+        let h = (parseFloat(heights[i].value) || 0) + kerf;
+        let q = parseInt(quantities[i].value) || 0;
+        totalAreaNeeded += (w * h * q);
+    }
+
+    if (totalAreaNeeded === 0) return alert("Please enter dimensions.");
+
+    const sheet12x6 = (3657.6 * 1828.8); // mm2
+    const sheet14x6 = (4267.2 * 1828.8); // mm2
+
+    // Logic: calculate waste for both options
+    const qty12 = Math.ceil(totalAreaNeeded / sheet12x6);
+    const waste12 = (qty12 * sheet12x6) - totalAreaNeeded;
+
+    const qty14 = Math.ceil(totalAreaNeeded / sheet14x6);
+    const waste14 = (qty14 * sheet14x6) - totalAreaNeeded;
+
+    let best;
+    if (waste12 <= waste14) {
+        best = { name: "12 x 6 Feet", qty: qty12, waste: waste12 };
+    } else {
+        best = { name: "14 x 6 Feet", qty: qty14, waste: waste14 };
+    }
+
+    document.getElementById('bestSheet').innerText = best.name;
+    document.getElementById('sheetsNeeded').innerText = best.qty;
+    document.getElementById('usedArea').innerText = (totalAreaNeeded / 1000000).toFixed(2);
+    document.getElementById('wasteArea').innerText = (best.waste / 1000000).toFixed(2);
+    
+    document.getElementById('comparison').innerHTML = 
+        `Waste comparison: 12x6 would waste ${(waste12/1000000).toFixed(2)}m² vs. 14x6 wasting ${(waste14/1000000).toFixed(2)}m².`;
+    
+    document.getElementById('results').style.display = 'block';
+}
+</script>
+</body>
+</html>
