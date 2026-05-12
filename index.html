@@ -98,8 +98,8 @@ function calculateOptimization() {
 
     if (totalAreaNeeded === 0) return alert("Please enter dimensions.");
 
-    const sheet12x6 = (3657.6 * 1828.8); // mm2
-    const sheet14x6 = (4267.2 * 1828.8); // mm2
+    const sheet12x6 = (3670 * 1860); // mm2
+    const sheet14x6 = (4300 * 1860); // mm2
 
     // Logic: calculate waste for both options
     const qty12 = Math.ceil(totalAreaNeeded / sheet12x6);
