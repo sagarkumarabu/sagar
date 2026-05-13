@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>2D Sheet Cutting Optimizer</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; color: #333; }
+        table { border-collapse: collapse; margin-bottom: 15px; width: 100%; max-width: 600px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        input { width: 90%; padding: 4px; }
+        button { padding: 6px 12px; cursor: pointer; }
+        .result-box { display: none; background: #f0f7f4; border: 1px solid #d2e7de; padding: 15px; margin-top: 20px; }
+        .sheet-canvas { border: 2px solid #333; background: #fff; margin-top: 15px; display: block; }
+        .sheet-container { margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+
+    <h2>2D Sheet Cutting Optimizer</h2>
+    
+    <label>Kerf / Blade Width (mm): <input type="number" id="kerf" value="4" style="width:60px;"></label>
+    <br><br>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Item Name</th>
+                <th>Width (mm)</th>
+                <th>Height (mm)</th>
+                <th>Qty</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="itemBody">
+            <tr>
+                <td><input type="text" value="Panel A" class="item-name"></td>
+                <td><input type="number" value="1200" class="item-w"></td>
+                <td><input type="number" value="800" class="item-h"></td>
+                <td><input type="number" value="4" class="item-q"></td>
+                <td><button onclick="this.closest('tr').remove()" style="color:red;">&times;</button></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <button onclick="addRow()">+ Add Row</button>
+    <button onclick="calculateOptimization()" style="background:#2e7d32; color:white; font-weight:bold;">Calculate Cuts</button>
+
+    <div id="results" class="result-box">
+        <h3>Optimal Choice: <span id="bestSheet"></span></h3>
+        <p>Total Sheets Required: <strong id="sheetsNeeded"></strong></p>
+        <p>Total Cut Panels Area: <span id="usedArea"></span> m² (<span id="ft2"></span> sq.ft)</p>
+        <div id="canvasContainer"></div>
+    </div>
+
+<script>
+function addRow() {
+    const tbody = document.getElementById('itemBody');
+    const row = `<tr>
+        <td><input type="text" placeholder="Divider/Urinal" class="item-name"></td>
+        <td><input type="number" class="item-w" placeholder="mm"></td>
+        <td><input type="number" class="item-h" placeholder="mm"></td>
+        <td><input type="number" value="1" class="item-q"></td>
+        <td><button onclick="this.closest('tr').remove()" style="color:red;">&times;</button></td>
+    </tr>`;
+    tbody.insertAdjacentHTML('beforeend', row);
+}
+
+// Fixed sheet inventory definitions (Width x Height in mm)
+const AVAILABLE_SHEETS = [
+    { name: "12 x 6 Feet", w: 3670, h: 1860 },
+    { name: "14 x 6 Feet", w: 4300, h: 1860 },
+    { name: "8 x 6 Feet",  w: 2438, h: 1829 }
+];
+
+function calculateOptimization() {
+    const kerf = parseFloat(document.getElementById('kerf').value) || 0;
+    const names = document.querySelectorAll('.item-name');
+    const widths = document.querySelectorAll('.item-w');
+    const heights = document.querySelectorAll('.item-h');
+    const quantities = document.querySelectorAll('.item-q');
+
+    // Flatten item list based on quantities
+    let rawItems = [];
+    let totalUsedAreaSqMm = 0;
+
+    for (let i = 0; i < widths.length; i++) {
+        let w = parseFloat(widths[i].value) || 0;
+        let h = parseFloat(heights[i].value) || 0;
+        let q = parseInt(quantities[i].value) || 0;
+        let label = names[i].value || `Item ${i+1}`;
+        
+        if (w <= 0 || h <= 0 || q <= 0) continue;
+
+        totalUsedAreaSqMm += (w * h * q);
+
+        for (let j = 0; j < q; j++) {
+            rawItems.push({ label: label, w: w, h: h });
+        }
+    }
+
+    if (rawItems.length === 0) return alert("Please enter valid panel dimensions.");
+
+    // Sort items by height descending to optimize packing efficiency
+    rawItems.sort((a, b) => b.h - a.h);
+
+    let bestOption = null;
+    let minSheetsUsed = Infinity;
+
+    // Test each stock sheet size to find which one uses fewer total sheets
+    AVAILABLE_SHEETS.forEach(sheetStock => {
+        let packedSheets = packItemsShelfFirstFit(rawItems, sheetStock, kerf);
+        if (packedSheets && packedSheets.length < minSheetsUsed) {
+            minSheetsUsed = packedSheets.length;
+            bestOption = {
+                stock: sheetStock,
+                layouts: packedSheets
+            };
+        }
+    });
+
+    if (!bestOption) return alert("Some parts are too large to fit on any available stock sheet sizes.");
+
+    // Render text metrics
+    document.getElementById('bestSheet').innerText = bestOption.stock.name;
+    document.getElementById('sheetsNeeded').innerText = bestOption.layouts.length;
+    document.getElementById('usedArea').innerText = (totalUsedAreaSqMm / 1000000).toFixed(2);
+    document.getElementById('ft2').innerText = (totalUsedAreaSqMm / 92903.04).toFixed(2);
+
+    // Render Canvas Visual Diagrams
+    const container = document.getElementById('canvasContainer');
+    container.innerHTML = ''; 
+
+    bestOption.layouts.forEach((sheet, index) => {
+        const title = document.createElement('h4');
+        title.innerText = `Sheet Layout #${index + 1} (${bestOption.stock.name})`;
+        container.appendChild(title);
+
+        const canvas = document.createElement('canvas');
+        canvas.className = 'sheet-canvas';
+        
+        // Scale canvas down visually to fit layout screens smoothly
+        const maxDisplayWidth = 700;
+        const scale = maxDisplayWidth / bestOption.stock.w;
+        canvas.width = maxDisplayWidth;
+        canvas.height = bestOption.stock.h * scale;
+        
+        container.appendChild(canvas);
+        drawSheetDiagram(canvas, sheet, bestOption.stock, scale);
+    });
+
+    document.getElementById('results').style.display = 'block';
+}
+
+// Next-Fit/First-Fit Decreasing Shelf Bin Packing Algorithm
+function packItemsShelfFirstFit(items, stock, kerf) {
+    let sheets = [];
+    
+    // Deep copy items to avoid mutating originals
+    let itemsToPack = items.map(p => ({...p}));
+
+    for (let item of itemsToPack) {
+        // Check if item fits into stock orientation or rotated
+        let fitsNormal = item.w <= stock.w && item.h <= stock.h;
+        let fitsRotated = item.h <= stock.w && item.w <= stock.h;
+
+        if (!fitsNormal && !fitsRotated) return null; // Component completely overflows raw stock sizes
+
+        let packed = false;
+
+        // Try to place the piece in existing open sheets
+        for (let sheet of sheets) {
+            if (tryPlaceOnSheetShelves(sheet, item, stock, kerf)) {
+                packed = true;
+                break;
+            }
+        }
+
+        // Allocate a brand new clean sheet layer if it didn't fit existing ones
+        if (!packed) {
+            let newSheet = { shelves: [] };
+            if (tryPlaceOnSheetShelves(newSheet, item, stock, kerf)) {
+                sheets.push(newSheet);
+            } else {
+                return null; 
+            }
+        }
+    }
+    return sheets;
+}
+
+function tryPlaceOnSheetShelves(sheet, item, stock, kerf) {
+    // Attempt normal orientation first, then auto-rotate to save strip footprint
+    let orientations = [
+        { w: item.w, h: item.h, rotated: false },
+        { w: item.h, h: item.w, rotated: true }
+    ];
+
+    for (let orient of orientations) {
+        if (orient.w > stock.w || orient.h > stock.h) continue;
+
+        let currentShelfY = 0;
+        for (let shelf of sheet.shelves) {
+            // Check if panel fits along the current row's remaining width space
+            if (currentShelfY + orient.h <= stock.h && (shelf.currentX + orient.w) <= stock.w && orient.h <= shelf.height) {
+                item.x = shelf.currentX;
+                item.y = currentShelfY;
+                item.finalW = orient.w;
+                item.finalH = orient.h;
+                shelf.placedItems.push(item);
+                shelf.currentX += orient.w + kerf; // step forward past cut line margin
+                return true;
+            }
+            currentShelfY += shelf.height + kerf;
+        }
+
+        // If no existing row has width room, evaluate creating a new shelf below them
+        if (currentShelfY + orient.h <= stock.h) {
+            let newShelf = {
+                height: orient.h,
+                currentX: orient.w + kerf,
+                placedItems: [item]
+            };
+            item.x = 0;
+            item.y = currentShelfY;
+            item.finalW = orient.w;
+            item.finalH = orient.h;
+            sheet.shelves.push(newShelf);
+            return true;
+        }
+    }
+    return false;
+}
+
+function drawSheetDiagram(canvas, sheet, stock, scale) {
+    const ctx = canvas.getContext('2d');
+    
+    // Background - Remaining unallocated material waste default color (Grey)
+    ctx.fillStyle = "#e0e0e0";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Loop through rows and render cut components (White/Blue blocks)
+    sheet.shelves.forEach(shelf => {
+        shelf.placedItems.forEach(item => {
+            const rx = item.x * scale;
+            const ry = item.y * scale;
+            const rw = item.finalW * scale;
+            const rh = item.finalH * scale;
+
+            // Draw Solid Block Solid Panel Pieces
+            ctx.fillStyle = "#bbdefb";
+            ctx.fillRect(rx, ry, rw, rh);
+            
+            ctx.strokeStyle = "#0d47a1";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(rx, ry, rw, rh);
+
+            // Print item text dimension footprints inside
+            ctx.fillStyle = "#000";
+            ctx.font = "10px Arial";
+            if (rw > 40 && rh > 20) {
+                ctx.fillText(item.label, rx + 4, ry + 14);
+                ctx.fillText(`${item.finalW}x${item.finalH}`, rx + 4, ry + 26);
+            }
+        });
+    });
+}
+</script>
+</body>
+</html>
