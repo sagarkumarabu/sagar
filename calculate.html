@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toilet Cubicle Partition Calculator</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-dark: #1e293b;
+            --border-color: #cbd5e1;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+
+        h1 {
+            margin-top: 0;
+            color: #0f172a;
+            font-size: 24px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .layout-grid { grid-template-columns: 1fr; }
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 15px;
+            box-sizing: border-box;
+            background-color: #fff;
+        }
+
+        input:focus, select:focus {
+            outline: 2px solid var(--primary);
+            border-color: transparent;
+        }
+
+        .results-panel {
+            background-color: #f1f5f9;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid var(--primary);
+        }
+
+        .results-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #0f172a;
+        }
+
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .kpi-val {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .kpi-lbl {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .matrix-box, .order-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 15px;
+        }
+
+        .matrix-box h3, .order-box h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 15px;
+            color: #475569;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 5px;
+        }
+
+        ul {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .alert-error {
+            background-color: #fef2f2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #fca5a5;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .order-highlight {
+            font-size: 20px;
+            font-weight: 700;
+            color: #16a34a;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🧻 Cubicle Partition Take-Off Calculator</h1>
+    
+    <div class="layout-grid">
+        <!-- Input Section -->
+        <div>
+            <div class="form-group">
+                <label for="numStalls">Number of Stalls</label>
+                <input type="number" id="numStalls" value="4" min="1" max="20">
+            </div>
+            <div class="form-group">
+                <label for="totalWidth">Total Front Wall Width (mm)</label>
+                <input type="number" id="totalWidth" value="3600" min="1000">
+            </div>
+            <div class="form-group">
+                <label for="depth">Cubicle Depth (mm)</label>
+                <input type="number" id="depth" value="1500" min="500">
+            </div>
+            <div class="form-group">
+                <label for="doorWidth">Standard Door Opening Width (mm)</label>
+                <input type="number" id="doorWidth" value="600" min="400">
+            </div>
+            <div class="form-group">
+                <label for="boardW">Master Sheet Width (mm)</label>
+                <select id="boardW">
+                    <option value="1220">1220 mm (4 feet)</option>
+                    <option value="1530">1530 mm (5 feet)</option>
+                    <option value="1830">1830 mm (6 feet)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="boardH">Master Sheet Height / System Height (mm)</label>
+                <select id="boardH">
+                    <option value="1830">1830 mm (6 feet)</option>
+                    <option value="2130">2130 mm (7 feet)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="wastage">Nesting Wastage Factor (%)</label>
+                <input type="number" id="wastage" value="15" min="0" max="100">
+            </div>
+        </div>
+
+        <!-- Output Section -->
+        <div>
+            <div id="errorBox" class="alert-error"></div>
+            
+            <div class="results-panel" id="resultsPanel">
+                <div class="results-title">Calculated Requirements</div>
+                
+                <!-- Component Counts -->
+                <div class="kpi-row">
+                    <div class="kpi-card">
+                        <div class="kpi-val" id="countDividers">0</div>
+                        <div class="kpi-lbl">Dividers</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-val" id="countPilasters">0</div>
+                        <div class="kpi-lbl">Pilasters</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-val" id="countDoors">0</div>
+                        <div class="kpi-lbl">Doors</div>
+                    </div>
+                </div>
+
+                <!-- Cutting Sizes -->
+                <div class="matrix-box">
+                    <h3>🔍 Component Sizing Matrix</h3>
+                    <ul>
+                        <li id="sizeDividers">Internal Partitions: -</li>
+                        <li id="sizeDoors">Front Doors: -</li>
+                        <li id="sizePilasters">Front Pilasters: -</li>
+                    </ul>
+                </div>
+
+                <!-- Material Purchasing Estimates -->
+                <div class="order-box">
+                    <h3>📦 Material Order Summary</h3>
+                    <ul>
+                        <li>Net Panel Surface Area: <span id="netArea">0.00</span> m²</li>
+                        <li>Gross Area (incl. waste): <span id="grossArea">0.00</span> m²</li>
+                        <li>Exact Volumetric Run: <span id="rawSheets">0.00</span> Boards</li>
+                        <li style="margin-top:8px; list-style-type:none;">
+                            <strong>FINAL SHEET ORDER: </strong> 
+                            <span id="finalOrder" class="order-highlight">0 Boards</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Gather UI Elements
+    const numStallsInput = document.getElementById('numStalls');
+    const totalWidthInput = document.getElementById('totalWidth');
+    const depthInput = document.getElementById('depth');
+    const doorWidthInput = document.getElementById('doorWidth');
+    const boardWSelect = document.getElementById('boardW');
+    const boardHSelect = document.getElementById('boardH');
+    const wastageInput = document.getElementById('wastage');
+
+    const errorBox = document.getElementById('errorBox');
+    const resultsPanel = document.getElementById('resultsPanel');
+
+    const countDividers = document.getElementById('countDividers');
+    const countPilasters = document.getElementById('countPilasters');
+    const countDoors = document.getElementById('countDoors');
+
+    const sizeDividers = document.getElementById('sizeDividers');
+    const sizeDoors = document.getElementById('sizeDoors');
+    const sizePilasters = document.getElementById('sizePilasters');
+
+    const netAreaSpan = document.getElementById('netArea');
+    const grossAreaSpan = document.getElementById('grossArea');
+    const rawSheetsSpan = document.getElementById('rawSheets');
+    const finalOrderSpan = document.getElementById('finalOrder');
+
+    // Computational Core Engine function
+    function calculate() {
+        // Parse numerical raw input parameters
+        const numStalls = parseInt(numStallsInput.value) || 0;
+        const totalWidth = parseFloat(totalWidthInput.value) || 0;
+        const depth = parseFloat(depthInput.value) || 0;
+        const doorWidth = parseFloat(doorWidthInput.value) || 0;
+        const boardW = parseFloat(boardWSelect.value);
+        const boardH = parseFloat(boardHSelect.value);
+        const wastage = (parseFloat(wastageInput.value) || 0) / 100;
+
+        // Validation Rules
+        if (numStalls <= 0 || totalWidth <= 0 || depth <= 0 || doorWidth <= 0) {
+            showError("Please enter values greater than zero for all geometric variables.");
+            return;
+        }
+
+        // Structural Component Assignments (Inline Run terminating on masonry walls)
+        const dividers = numStalls - 1;
+        const pilasters = numStalls + 1;
+        const doors = numStalls;
+
+        const totalDoorWidth = doors * doorWidth;
+        const remainingSpace = totalWidth - totalDoorWidth;
+
+        // Space Conflict Check
+        if (remainingSpace <= 0) {
+            showError(`🚨 <strong>Layout Conflict:</strong> Combined door widths (${totalDoorWidth}mm) exceed front wall width (${totalWidth}mm). Reduce stall counts or shrink standard doors.`);
+            return;
+        }
+
+        // Hide errors if calculations clear validation
+        clearError();
+
+        const avgPilasterW = remainingSpace / pilasters;
+
+        // Area Calculations (Square Millimeters to Square Meters conversion)
+        const sheetArea = boardW * boardH;
+        const areaDividers = dividers * (depth * boardH);
+        const areaDoors = doors * (doorWidth * boardH);
+        const areaPilasters = pilasters * (avgPilasterW * boardH);
+
+        const netSurfaceArea = areaDividers + areaDoors + areaPilasters;
+        const grossSurfaceArea = netSurfaceArea * (1 + wastage);
+        const rawSheetsCalculated = grossSurfaceArea / sheetArea;
+        const finalSheetOrder = Math.ceil(rawSheetsCalculated);
+
+        // Update Text & KPI Values in UI
+        countDividers.textContent = dividers;
+        countPilasters.textContent = pilasters;
+        countDoors.textContent = doors;
+
+        sizeDividers.innerHTML = `<strong>${dividers}x Internal Partitions:</strong> ${depth}mm (W) × ${boardH}mm (H)`;
+        sizeDoors.innerHTML = `<strong>${doors}x Front Doors:</strong> ${doorWidth}mm (W) × ${boardH}mm (H)`;
+        sizePilasters.innerHTML = `<strong>${pilasters}x Front Pilasters:</strong> ${avgPilasterW.toFixed(1)}mm (W) × ${boardH}mm (H)`;
+
+        netAreaSpan.textContent = (netSurfaceArea / 1000000).toFixed(2);
+        grossAreaSpan.textContent = (grossSurfaceArea / 1000000).toFixed(2);
+        rawSheetsSpan.textContent = rawSheetsCalculated.toFixed(2);
+        finalOrderSpan.textContent = `${finalSheetOrder} Boards`;
+    }
+
+    function showError(msg) {
+        errorBox.innerHTML = msg;
+        errorBox.style.display = 'block';
+        resultsPanel.style.opacity = '0.3';
+    }
+
+    function clearError() {
+        errorBox.style.display = 'none';
+        resultsPanel.style.opacity = '1';
+    }
+
+    // Attach Event Listeners to recalculate in real-time as users type or change selections
+    const inputs = [numStallsInput, totalWidthInput, depthInput, doorWidthInput, boardWSelect, boardHSelect, wastageInput];
+    inputs.forEach(input => input.addEventListener('input', calculate));
+
+    // Run basic initialization render on page mount
+    calculate();
+</script>
+
+</body>
+</html>
