@@ -8,8 +8,8 @@
         :root {
             --primary: #2563eb;
             --primary-hover: #1d4ed8;
-            --bg-main: #f8fafc;
-            --bg-card: #ffffff;
+            --bg-main: #0a3764;
+            --bg-card: #dacccc;
             --text-dark: #1e293b;
             --border-color: #cbd5e1;
         }
@@ -165,20 +165,26 @@
     </style>
 </head>
 <body>
-
 <div class="container">
-    <h1>🧻 Cubicle Partition Take-Off Calculator</h1>
-    
+ <button><a href="index.html">hpl calculate</a></button>
+    <h1> Cubicle Partition calculator</h1>
     <div class="layout-grid">
         <!-- Input Section -->
         <div>
             <div class="form-group">
-                <label for="numStalls">Number of Stalls</label>
+                <label for="numStalls">Number of cubicle</label>
                 <input type="number" id="numStalls" value="4" min="1" max="20">
             </div>
             <div class="form-group">
                 <label for="totalWidth">Total Front Wall Width (mm)</label>
                 <input type="number" id="totalWidth" value="3600" min="1000">
+            </div>
+            <div class="form-group">
+                <label for="wall">wall</label>
+                <select name="wall" id="wall">
+                    <option value="l">Lwall</option>
+                    <option value="c">Cwall</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="depth">Cubicle Depth (mm)</label>
@@ -191,16 +197,19 @@
             <div class="form-group">
                 <label for="boardW">Master Sheet Width (mm)</label>
                 <select id="boardW">
-                    <option value="1220">1220 mm (4 feet)</option>
-                    <option value="1530">1530 mm (5 feet)</option>
-                    <option value="1830">1830 mm (6 feet)</option>
+                    <option value="1220">3670 mm (12 feet)</option>
+                    <option value="1530">4300 mm (14 feet)</option>
+                    <option value="1830">2438 mm (8 feet)</option>
+    const sheet12x6 = (3670 * 1860); // mm2
+    const sheet14x6 = (4300 * 1860); // mm2
+    const sheet8x6 =(2438.4 * 1828.8); //mm2
                 </select>
             </div>
             <div class="form-group">
                 <label for="boardH">Master Sheet Height / System Height (mm)</label>
                 <select id="boardH">
-                    <option value="1830">1830 mm (6 feet)</option>
-                    <option value="2130">2130 mm (7 feet)</option>
+                    <option value="1830">1860 mm (6 feet)</option>
+                    <option value="2130">1828.8 mm (6 feet)</option>
                 </select>
             </div>
             <div class="form-group">
@@ -236,12 +245,11 @@
                 <div class="matrix-box">
                     <h3>🔍 Component Sizing Matrix</h3>
                     <ul>
-                        <li id="sizeDividers">Internal Partitions: -</li>
+                        <li id="sizeDividers"> Dividers: -</li>
                         <li id="sizeDoors">Front Doors: -</li>
                         <li id="sizePilasters">Front Pilasters: -</li>
                     </ul>
                 </div>
-
                 <!-- Material Purchasing Estimates -->
                 <div class="order-box">
                     <h3>📦 Material Order Summary</h3>
@@ -264,6 +272,7 @@
     // Gather UI Elements
     const numStallsInput = document.getElementById('numStalls');
     const totalWidthInput = document.getElementById('totalWidth');
+    const wallSelect =  document.getElementById('wall'); // Maps to your <select name="wall">
     const depthInput = document.getElementById('depth');
     const doorWidthInput = document.getElementById('doorWidth');
     const boardWSelect = document.getElementById('boardW');
@@ -291,6 +300,7 @@
         // Parse numerical raw input parameters
         const numStalls = parseInt(numStallsInput.value) || 0;
         const totalWidth = parseFloat(totalWidthInput.value) || 0;
+        const wallType = wallSelect.value; // 'l' for L-wall, 'c' for C-wall
         const depth = parseFloat(depthInput.value) || 0;
         const doorWidth = parseFloat(doorWidthInput.value) || 0;
         const boardW = parseFloat(boardWSelect.value);
@@ -303,10 +313,20 @@
             return;
         }
 
-        // Structural Component Assignments (Inline Run terminating on masonry walls)
-        const dividers = numStalls - 1;
-        const pilasters = numStalls + 1;
+        // Structural Component Assignments based on Layout Types
+        let dividers = 0;
+        let pilasters = 0;
         const doors = numStalls;
+
+        if (wallType === 'l') {
+            // L-Wall: Open on one side. Needs an extra divider/end panel to close the deep side.
+            dividers = (numStalls - 1) + 1; // standard inner dividers + 1 corner deep divider
+            pilasters = numStalls + 1;       // standard inline front pilaster count
+        } else {
+            // C-Wall: Closed between 3 masonry walls. 
+            dividers = numStalls - 1;       // only internal partitions needed
+            pilasters = numStalls + 1;       
+        }
 
         const totalDoorWidth = doors * doorWidth;
         const remainingSpace = totalWidth - totalDoorWidth;
@@ -317,53 +337,66 @@
             return;
         }
 
-        // Hide errors if calculations clear validation
-        clearError();
+        // Clear errors and run final UI panel render using your structural variables
+        hideError();
+        
+        // Front system calculation variables
+        const individualPilasterWidth = remainingSpace / pilasters;
 
-        const avgPilasterW = remainingSpace / pilasters;
-
-        // Area Calculations (Square Millimeters to Square Meters conversion)
-        const sheetArea = boardW * boardH;
-        const areaDividers = dividers * (depth * boardH);
-        const areaDoors = doors * (doorWidth * boardH);
-        const areaPilasters = pilasters * (avgPilasterW * boardH);
-
-        const netSurfaceArea = areaDividers + areaDoors + areaPilasters;
-        const grossSurfaceArea = netSurfaceArea * (1 + wastage);
-        const rawSheetsCalculated = grossSurfaceArea / sheetArea;
-        const finalSheetOrder = Math.ceil(rawSheetsCalculated);
-
-        // Update Text & KPI Values in UI
+        // UI Component Updates
         countDividers.textContent = dividers;
         countPilasters.textContent = pilasters;
         countDoors.textContent = doors;
 
-        sizeDividers.innerHTML = `<strong>${dividers}x Internal Partitions:</strong> ${depth}mm (W) × ${boardH}mm (H)`;
-        sizeDoors.innerHTML = `<strong>${doors}x Front Doors:</strong> ${doorWidth}mm (W) × ${boardH}mm (H)`;
-        sizePilasters.innerHTML = `<strong>${pilasters}x Front Pilasters:</strong> ${avgPilasterW.toFixed(1)}mm (W) × ${boardH}mm (H)`;
+        // Display Sizing Matrix
+        sizeDividers.textContent = `Internal Partitions: ${dividers} pcs @ ${depth}mm x ${boardH}mm`;
+        sizeDoors.textContent = `Front Doors: ${doors} pcs @ ${doorWidth}mm x ${boardH}mm`;
+        sizePilasters.textContent = `Front Pilasters: ${pilasters} pcs @ ${individualPilasterWidth.toFixed(1)}mm x ${boardH}mm`;
 
-        netAreaSpan.textContent = (netSurfaceArea / 1000000).toFixed(2);
-        grossAreaSpan.textContent = (grossSurfaceArea / 1000000).toFixed(2);
-        rawSheetsSpan.textContent = rawSheetsCalculated.toFixed(2);
-        finalOrderSpan.textContent = `${finalSheetOrder} Boards`;
+        // Calculate Surface Areas (m²)
+        const dividerArea = (dividers * depth * boardH) / 1000000;
+        const doorArea = (doors * doorWidth * boardH) / 1000000;
+        const pilasterArea = (pilasters * individualPilasterWidth * boardH) / 1000000;
+        
+        const netArea = dividerArea + doorArea + pilasterArea;
+        const grossArea = netArea * (1 + wastage);
+
+        // Map selection element value back to exact template square millimetres
+        let sheetAreaMm2 = 0;
+        if (boardW === 1220) sheetAreaMm2 = 3670 * 1860;
+        else if (boardW === 1530) sheetAreaMm2 = 4300 * 1860;
+        else if (boardW === 1830) sheetAreaMm2 = 2438.4 * 1828.8;
+        
+        const sheetAreaM2 = sheetAreaMm2 / 1000000;
+        const rawSheets = grossArea / sheetAreaM2;
+        const finalOrder = Math.ceil(rawSheets);
+
+        // Print Order Summary Data
+        netAreaSpan.textContent = netArea.toFixed(2);
+        grossAreaSpan.textContent = grossArea.toFixed(2);
+        rawSheetsSpan.textContent = rawSheets.toFixed(2);
+        finalOrderSpan.textContent = `${finalOrder} Board${finalOrder !== 1 ? 's' : ''}`;
     }
 
+    // Helper functions for UI Messaging
     function showError(msg) {
         errorBox.innerHTML = msg;
         errorBox.style.display = 'block';
-        resultsPanel.style.opacity = '0.3';
+        resultsPanel.style.opacity = '0.4';
     }
 
-    function clearError() {
+    function hideError() {
         errorBox.style.display = 'none';
+        errorBox.innerHTML = '';
         resultsPanel.style.opacity = '1';
     }
 
-    // Attach Event Listeners to recalculate in real-time as users type or change selections
-    const inputs = [numStallsInput, totalWidthInput, depthInput, doorWidthInput, boardWSelect, boardHSelect, wastageInput];
-    inputs.forEach(input => input.addEventListener('input', calculate));
+    // Attach Event Listeners for Live Recalculations
+    [numStallsInput, totalWidthInput, wallSelect, depthInput, doorWidthInput, boardWSelect, boardHSelect, wastageInput].forEach(element => {
+        if(element) element.addEventListener('input', calculate);
+    });
 
-    // Run basic initialization render on page mount
+    // Run calculation on initial load
     calculate();
 </script>
 
