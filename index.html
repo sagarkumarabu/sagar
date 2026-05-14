@@ -33,7 +33,8 @@
         </thead>
         <tbody id="itemBody">
             <tr>
-                <td><input type="text" value="Panel A" class="item-name"></td>
+                <td><input type="text" value="Panel A" class="item-name">
+              </td>
                 <td><input type="number" value="0" class="item-w"></td>
                 <td><input type="number" value="0" class="item-h"></td>
                 <td><input type="number" value="1" class="item-q"></td>
@@ -52,6 +53,21 @@
         <p>Total Cut Panels Area: <span id="usedArea"></span> m² (<span id="ft2"></span> sq.ft)</p>
         <div id="canvasContainer"></div>
     </div>
+    <!-- Insert this inside your #results div container -->
+<div id="orderSummarySection" style="margin: 15px 0; padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 4px;">
+    <h3 style="margin-top: 0; color: #333;">Material Order Summary</h3>
+    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+        <thead>
+            <tr style="background: #f1f1f1; border-bottom: 2px solid #ccc;">
+                <th style="padding: 8px;">Sheet Size / Specification</th>
+                <th style="padding: 8px;">Quantity Required</th>
+            </tr>
+        </thead>
+        <tbody id="summaryTableBody">
+            <!-- Dynamic data will be generated here -->
+        </tbody>
+    </table>
+</div>
 
 <script>
 function addRow() {
@@ -69,8 +85,8 @@ function addRow() {
 // Fixed sheet inventory definitions (Width x Height in mm)
 const AVAILABLE_SHEETS = [
     { name: "12 x 6 Feet", w: 3670, h: 1860 },
-    { name: "14 x 6 Feet", w: 4300, h: 1860 },
-    { name: "8 x 6 Feet",  w: 2438, h: 1829 }
+    { name: "14 x 6 Feet", w: 4300, h: 1860 }
+    // { name: "8 x 6 Feet",  w: 2438, h: 1829 }
 ];
 function calculateOptimization() {
     const kerf = parseFloat(document.getElementById('kerf').value) || 0;
@@ -102,100 +118,133 @@ function calculateOptimization() {
 
     let bestOption = null;
     let minSheetsUsed = Infinity;
-    AVAILABLE_SHEETS.forEach(sheetStock => {
-        let packedSheets = packItemsShelfFirstFit(rawItems, sheetStock, kerf);
-        if (packedSheets && packedSheets.length < minSheetsUsed) {
-            minSheetsUsed = packedSheets.length;
-            bestOption = {
-                stock: sheetStock,
-                layouts: packedSheets
-            };
-        }
-    });
-    if (!bestOption) return alert("Some parts are too large to fit on any available stock sheet sizes.");
 
-    document.getElementById('bestSheet').innerText = bestOption.stock.name;
-    document.getElementById('sheetsNeeded').innerText = bestOption.layouts.length;
-    document.getElementById('usedArea').innerText = (totalUsedAreaSqMm / 1000000).toFixed(2);
-    document.getElementById('ft2').innerText = (totalUsedAreaSqMm / 92903.04).toFixed(2);
+  // --- REPLACE YOUR CHOSEN "AVAILABLE_SHEETS.forEach" REGION WITH THIS LOGIC ---
+let packedSheets = packItemsIndividually(rawItems, AVAILABLE_SHEETS, kerf);
 
-    const container = document.getElementById('canvasContainer');
-    container.innerHTML = ''; 
+if (!packedSheets || packedSheets.length === 0) {
+    return alert("Some parts are too large to fit on any available stock sheet sizes.");
+}
 
-    const totalStockAreaSqMm = bestOption.stock.w * bestOption.stock.h;
+// Map parameters dynamically to support mixed sizes in output summary logs
+let totalStockAreaSqMm = 0;
+packedSheets.forEach(sheet => {
+    totalStockAreaSqMm += sheet.stock.w * sheet.stock.h;
+});
 
-    // --- CHANGED PART STARTS HERE ---
-    bestOption.layouts.forEach((sheet, index) => {
-        let sheetUsedAreaSqMm = 0;
-        sheet.shelves.forEach(shelf => {
-            shelf.placedItems.forEach(item => {
-                sheetUsedAreaSqMm += (item.finalW * item.finalH);
-            });
+// Update standard display blocks safely
+document.getElementById('bestSheet').innerText = "Mixed Sizes Used";
+document.getElementById('sheetsNeeded').innerText = packedSheets.length;
+document.getElementById('usedArea').innerText = (totalUsedAreaSqMm / 1000000).toFixed(2);
+document.getElementById('ft2').innerText = (totalUsedAreaSqMm / 92903.04).toFixed(2);
+
+const summaryTableBody = document.getElementById('summaryTableBody');
+summaryTableBody.innerHTML = '';
+const orderCounts = {};
+packedSheets.forEach(sheet => {
+    orderCounts[sheet.stock.name] = (orderCounts[sheet.stock.name] || 0) + 1;
+});
+Object.entries(orderCounts).forEach(([sizeName, count]) => {
+    const row = `
+        <tr style="border-bottom: 1px solid #eee;">
+            <td style="padding: 8px; font-weight: bold; color: #1565c0;">${sizeName}</td>
+            <td style="padding: 8px; font-weight: bold;">${count} pcs</td>
+        </tr>
+    `;
+    summaryTableBody.insertAdjacentHTML('beforeend', row);
+});
+
+const container = document.getElementById('canvasContainer');
+container.innerHTML = ''; 
+
+// Build responsive HTML output layout containers dynamically per unique mixed canvas instance
+packedSheets.forEach((sheet, index) => {
+    let sheetUsedAreaSqMm = 0;
+    sheet.shelves.forEach(shelf => {
+        shelf.placedItems.forEach(item => {
+            sheetUsedAreaSqMm += (item.finalW * item.finalH);
         });
-
-        let remainingAreaSqMm = totalStockAreaSqMm - sheetUsedAreaSqMm;
-        let remainingSqM = (remainingAreaSqMm / 1000000).toFixed(2);
-        let remainingSqFt = (remainingAreaSqMm / 92903.04).toFixed(2);
-
-        const sheetDiv = document.createElement('div');
-        sheetDiv.className = 'sheet-container';
-
-        const title = document.createElement('h4');
-        title.style.margin = "5px 0";
-        title.innerText = `Sheet Layout #${index + 1} (${bestOption.stock.name})`;
-        sheetDiv.appendChild(title);
-
-        const wasteInfo = document.createElement('div');
-        wasteInfo.className = 'waste-info';
-        wasteInfo.innerText = `Remaining (Scrap) Area: ${remainingSqM} m² (${remainingSqFt} sq.ft)`;
-        sheetDiv.appendChild(wasteInfo);
-
-        const canvas = document.createElement('canvas');
-        canvas.className = 'sheet-canvas';
-        
-        const maxDisplayWidth = 700;
-        const scale = maxDisplayWidth / bestOption.stock.w;
-        canvas.width = maxDisplayWidth;
-        canvas.height = bestOption.stock.h * scale;
-        
-        sheetDiv.appendChild(canvas);
-        drawSheetDiagram(canvas, sheet, bestOption.stock, scale);
-        
-        container.appendChild(sheetDiv);
     });
-    // --- CHANGED PART ENDS HERE ---
 
- 
-      
+    let currentSheetTotalArea = sheet.stock.w * sheet.stock.h;
+    let remainingAreaSqMm = currentSheetTotalArea - sheetUsedAreaSqMm;
+    let remainingSqM = (remainingAreaSqMm / 1000000).toFixed(2);
+    let remainingSqFt = (remainingAreaSqMm / 92903.04).toFixed(2);
 
-    document.getElementById('results').style.display = 'block';
+    const sheetDiv = document.createElement('div');
+    sheetDiv.className = 'sheet-container';
+
+    const title = document.createElement('h4');
+    title.style.margin = "5px 0";
+    title.innerText = `Sheet Layout #${index + 1} (${sheet.stock.name})`; // Uses individual sheet identity
+    sheetDiv.appendChild(title);
+
+    const wasteInfo = document.createElement('div');
+    wasteInfo.className = 'waste-info';
+    wasteInfo.innerText = `Remaining (Scrap) Area: ${remainingSqM} m² (${remainingSqFt} sq.ft)`;
+    sheetDiv.appendChild(wasteInfo);
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'sheet-canvas';
+    
+    const maxDisplayWidth = 700;
+    const scale = maxDisplayWidth / sheet.stock.w; // Scales down relative to specific stock size
+    canvas.width = maxDisplayWidth;
+    canvas.height = sheet.stock.h * scale;
+    
+    sheetDiv.appendChild(canvas);
+    drawSheetDiagram(canvas, sheet, sheet.stock, scale);
+    
+    container.appendChild(sheetDiv);
+});
+
+document.getElementById('results').style.display = 'block';
 }
 // Next-Fit/First-Fit Decreasing Shelf Bin Packing Algorithm
-function packItemsShelfFirstFit(items, stock, kerf) {
+// New packing coordinator managing item placement item-by-item across different stock metrics
+function packItemsIndividually(items, stockInventory, kerf) {
     let sheets = [];
-    // Deep copy items to avoid mutating originals
-    let itemsToPack = items.map(p => ({...p}));
+    
+    // Sort inventory list dynamically from smallest footprint area to largest
+    let sortedStock = [...stockInventory].sort((a, b) => (a.w * a.h) - (b.w * b.h));
+    
+    // Generate clean isolated object copies to avoid pointer state pollution
+    let itemsToPack = items.map(p => ({ ...p }));
 
     for (let item of itemsToPack) {
-        // Check if item fits into stock orientation or rotated
-        let fitsNormal = item.w <= stock.w && item.h <= stock.h;
-        let fitsRotated = item.h <= stock.w && item.w <= stock.h;
-
-        if (!fitsNormal && !fitsRotated) return null; // Component completely overflows raw stock sizes
         let packed = false;
 
-        // Try to place the piece in existing open sheets
+        // Step 1: Attempt to fit the item onto an existing shelf in your currently opened sheets
         for (let sheet of sheets) {
-            if (tryPlaceOnSheetShelves(sheet, item, stock, kerf)) {
+            if (tryPlaceOnSheetShelves(sheet, item, sheet.stock, kerf)) {
                 packed = true;
                 break;
             }
         }
 
-        // Allocate a brand new clean sheet layer if it didn't fit existing ones
+        // Step 2: Open a brand new sheet using the smallest possible size that accommodates the item
         if (!packed) {
-            let newSheet = { shelves: [] };
-            if (tryPlaceOnSheetShelves(newSheet, item, stock, kerf)) {
+            let matchedStock = null;
+            
+            // Scan sizes to find the smallest sheet that fits this panel layout profile
+            for (let stock of sortedStock) {
+                let fitsNormal = item.w <= stock.w && item.h <= stock.h;
+                let fitsRotated = item.h <= stock.w && item.w <= stock.h;
+                if (fitsNormal || fitsRotated) {
+                    matchedStock = stock;
+                    break;
+                }
+            }
+
+            // Return empty if the item is too large for even your largest stock sheet size
+            if (!matchedStock) return null; 
+
+            let newSheet = { 
+                stock: matchedStock, 
+                shelves: [] 
+            };
+            
+            if (tryPlaceOnSheetShelves(newSheet, item, matchedStock, kerf)) {
                 sheets.push(newSheet);
             } else {
                 return null; 
@@ -204,6 +253,7 @@ function packItemsShelfFirstFit(items, stock, kerf) {
     }
     return sheets;
 }
+
 
 function tryPlaceOnSheetShelves(sheet, item, stock, kerf) {
     // Attempt normal orientation first, then auto-rotate to save strip footprint
@@ -247,8 +297,10 @@ function tryPlaceOnSheetShelves(sheet, item, stock, kerf) {
     }
     return false;
 }
-//  canvas drawing
-function drawSheetDiagram(canvas, sheet, stock, scale) {
+
+
+//  canvas drawing.............................................................................
+function drawSheetDiagram(canvas, sheet, stock, scale, kerf = 2) {
     const ctx = canvas.getContext('2d');
     
     // Background - Base layout setup
@@ -261,7 +313,7 @@ function drawSheetDiagram(canvas, sheet, stock, scale) {
     let currentShelfY = 0;
 
     // 1. Loop through shelf rows to draw items and track empty end-of-row spaces
-    sheet.shelves.forEach(shelf => {
+    sheet.shelves.forEach((shelf, shelfIndex) => {
         // Draw the placed item panels inside this row
         shelf.placedItems.forEach(item => {
             const rx = item.x * scale;
@@ -345,6 +397,8 @@ function drawSheetDiagram(canvas, sheet, stock, scale) {
         }
     }
 }
+
+
 </script>
 </body>
 </html>
