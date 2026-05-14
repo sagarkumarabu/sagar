@@ -18,11 +18,9 @@
 <body>
 <button><a href="calculate.html">hpl calculate</a></button>
     <h2>2D Sheet Cutting Optimizer</h2>
-    
     <label>Kerf / Blade Width (mm): 
         <input type="number" id="kerf" value="2" style="width:60px;"></label>
     <br><br>
-
     <table>
         <thead>
             <tr>
@@ -249,7 +247,7 @@ function tryPlaceOnSheetShelves(sheet, item, stock, kerf) {
     }
     return false;
 }
-
+//  canvas drawing
 function drawSheetDiagram(canvas, sheet, stock, scale) {
     const ctx = canvas.getContext('2d');
     
@@ -317,7 +315,6 @@ function drawSheetDiagram(canvas, sheet, stock, scale) {
                 ctx.fillText(`${Math.round(scrapW)}x${Math.round(scrapH)}`, sx + (sw / 2), sy + (sh / 2));
             }
         }
-
         // Increment row track pointer position (Matches packing algorithm layer height stack logic)
         // Note: If your algorithm adds kerf between shelves, add it here as well
         currentShelfY += shelf.height; 
@@ -348,7 +345,6 @@ function drawSheetDiagram(canvas, sheet, stock, scale) {
         }
     }
 }
-
 </script>
 </body>
 </html>
