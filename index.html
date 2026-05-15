@@ -9,7 +9,7 @@
         th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
         input { width: 90%; padding: 4px; }
         button { padding: 6px 12px; cursor: pointer; }
-        .result-box { display: none; background: #f0f7f4; border: 1px solid #d2e7de; padding: 15px; margin-top: 20px; }
+        .result-box { display: none; background: #eff1f1; border: 1px solid #d2e7de; padding: 15px; margin-top: 20px; }
         .sheet-canvas { border: 2px solid #333; background: #fff; margin-top: 15px; display: block; }
         .sheet-container { margin-bottom: 30px; }
         .waste-info { color: #c62828; font-weight: bold; margin: 5px 0; }
@@ -33,15 +33,15 @@
         </thead>
         <tbody id="itemBody">
             <tr>
-                <td><select class="item-name">
+                <td><select class="item-name" onchange="setDefaultDimensions(this)">
                     <option value="door">Door</option>
                     <option value="plaster">Plaster</option>
                     <option value="divider">Divider</option>
                     <option value="urinal">Urinal</option>
                     <option value="endwall">Endwall</option>
                 </select></td>
-                <td><input type="number" value="0" class="item-w"></td>
-                <td><input type="number" value="0" class="item-h"></td>
+                <td><input type="number" value="600" class="item-w"></td>
+                <td><input type="number" value="1790" class="item-h"></td>
                 <td><input type="number" value="1" class="item-q"></td>
                 <td><button onclick="this.closest('tr').remove()" style="color:red;">&times;</button></td>
             </tr>
@@ -81,19 +81,36 @@
 function addRow() {
     const tbody = document.getElementById('itemBody');
     const row = `<tr>
-        <td><select class="item-name">
+        <td><select class="item-name" onchange="setDefaultDimensions(this)">
             <option value="door">Door</option>
             <option value="plaster">Plaster</option>
             <option value="divider">Divider</option>
             <option value="urinal">Urinal</option>
             <option value="endwall">Endwall</option>
         </select></td>
-        <td><input type="number" class="item-w" placeholder="mm"></td>
-        <td><input type="number" class="item-h" placeholder="mm"></td>
+        <td><input type="number" class="item-w" placeholder="mm" value="600"></td>
+        <td><input type="number" class="item-h" placeholder="mm" value="1790"></td>
         <td><input type="number" value="1" class="item-q"></td>
         <td><button onclick="this.closest('tr').remove()" style="color:red;">&times;</button></td>
     </tr>`;
     tbody.insertAdjacentHTML('beforeend', row);
+}
+
+const ITEM_DEFAULT_DIMENSIONS = {
+    door: { w: 600, h: 1790 },
+    plaster: { w: 600, h: 2400 },
+    divider: { w: 1500, h: 1790 },
+    urinal: { w: 450, h: 900 },
+    endwall: { w: 200, h: 1830 }
+};
+
+function setDefaultDimensions(select) {
+    const dims = ITEM_DEFAULT_DIMENSIONS[select.value] || { w: '', h: '' };
+    const row = select.closest('tr');
+    const widthInput = row.querySelector('.item-w');
+    const heightInput = row.querySelector('.item-h');
+    if (widthInput) widthInput.value = dims.w;
+    if (heightInput) heightInput.value = dims.h;
 }
 
 // Fixed sheet inventory definitions (Width x Height in mm)
@@ -128,13 +145,17 @@ function calculateOptimization() {
     }
     if (rawItems.length === 0) return alert("Please enter valid panel dimensions.");
 
-    rawItems.sort((a, b) => b.h - a.h);
+    rawItems.sort((a, b) => {
+        const areaA = a.w * a.h;
+        const areaB = b.w * b.h;
+        if (areaB !== areaA) return areaB - areaA;
+        return Math.max(b.w, b.h) - Math.max(a.w, a.h);
+    });
 
     let bestOption = null;
     let minSheetsUsed = Infinity;
 
-  // --- REPLACE YOUR CHOSEN "AVAILABLE_SHEETS.forEach" REGION WITH THIS LOGIC ---
-let packedSheets = packItemsIndividually(rawItems, AVAILABLE_SHEETS, kerf);
+    let packedSheets = packItemsIndividually(rawItems, AVAILABLE_SHEETS, kerf);
 
 if (!packedSheets || packedSheets.length === 0) {
     return alert("Some parts are too large to fit on any available stock sheet sizes.");
@@ -162,10 +183,8 @@ packedSheets.forEach(sheet => {
     }
     const sheetArea = sheet.stock.w * sheet.stock.h;
     let usedArea = 0;
-    sheet.shelves.forEach(shelf => {
-        shelf.placedItems.forEach(item => {
-            usedArea += item.finalW * item.finalH;
-        });
+    sheet.placedItems.forEach(item => {
+        usedArea += item.finalW * item.finalH;
     });
     orderSummary[sheetName].count += 1;
     orderSummary[sheetName].totalArea += sheetArea;
@@ -191,10 +210,8 @@ container.innerHTML = '';
 // Build responsive HTML output layout containers dynamically per unique mixed canvas instance
 packedSheets.forEach((sheet, index) => {
     let sheetUsedAreaSqMm = 0;
-    sheet.shelves.forEach(shelf => {
-        shelf.placedItems.forEach(item => {
-            sheetUsedAreaSqMm += (item.finalW * item.finalH);
-        });
+    sheet.placedItems.forEach(item => {
+        sheetUsedAreaSqMm += (item.finalW * item.finalH);
     });
 
     let currentSheetTotalArea = sheet.stock.w * sheet.stock.h;
@@ -228,7 +245,7 @@ packedSheets.forEach((sheet, index) => {
     canvas.height = sheet.stock.h * scale;
     
     sheetDiv.appendChild(canvas);
-    drawSheetDiagram(canvas, sheet, sheet.stock, scale);
+    drawSheetDiagram(canvas, sheet, scale, kerf);
     
     container.appendChild(sheetDiv);
 });
@@ -239,29 +256,21 @@ document.getElementById('results').style.display = 'block';
 // New packing coordinator managing item placement item-by-item across different stock metrics
 function packItemsIndividually(items, stockInventory, kerf) {
     let sheets = [];
-    
-    // Sort inventory list dynamically from smallest footprint area to largest
     let sortedStock = [...stockInventory].sort((a, b) => (a.w * a.h) - (b.w * b.h));
-    
-    // Generate clean isolated object copies to avoid pointer state pollution
     let itemsToPack = items.map(p => ({ ...p }));
 
     for (let item of itemsToPack) {
         let packed = false;
 
-        // Step 1: Attempt to fit the item onto an existing shelf in your currently opened sheets
         for (let sheet of sheets) {
-            if (tryPlaceOnSheetShelves(sheet, item, sheet.stock, kerf)) {
+            if (tryPlaceOnSheetFreeRects(sheet, item, kerf)) {
                 packed = true;
                 break;
             }
         }
 
-        // Step 2: Open a brand new sheet using the smallest possible size that accommodates the item
         if (!packed) {
             let matchedStock = null;
-            
-            // Scan sizes to find the smallest sheet that fits this panel layout profile
             for (let stock of sortedStock) {
                 let fitsNormal = item.w <= stock.w && item.h <= stock.h;
                 let fitsRotated = item.h <= stock.w && item.w <= stock.h;
@@ -270,170 +279,177 @@ function packItemsIndividually(items, stockInventory, kerf) {
                     break;
                 }
             }
+            if (!matchedStock) return null;
 
-            // Return empty if the item is too large for even your largest stock sheet size
-            if (!matchedStock) return null; 
-
-            let newSheet = { 
-                stock: matchedStock, 
-                shelves: [] 
+            let newSheet = {
+                stock: matchedStock,
+                placedItems: [],
+                freeRects: [{ x: 0, y: 0, w: matchedStock.w, h: matchedStock.h }]
             };
-            
-            if (tryPlaceOnSheetShelves(newSheet, item, matchedStock, kerf)) {
+
+            if (tryPlaceOnSheetFreeRects(newSheet, item, kerf)) {
                 sheets.push(newSheet);
             } else {
-                return null; 
+                return null;
             }
         }
     }
     return sheets;
 }
 
-
-function tryPlaceOnSheetShelves(sheet, item, stock, kerf) {
-    // Attempt normal orientation first, then auto-rotate to save strip footprint
+function tryPlaceOnSheetFreeRects(sheet, item, kerf) {
+    let bestPlacement = null;
     let orientations = [
         { w: item.w, h: item.h, rotated: false },
         { w: item.h, h: item.w, rotated: true }
     ];
 
     for (let orient of orientations) {
-        if (orient.w > stock.w || orient.h > stock.h) continue;
+        if (orient.w > sheet.stock.w || orient.h > sheet.stock.h) continue;
 
-        let currentShelfY = 0;
-        for (let shelf of sheet.shelves) {
-            // Check if panel fits along the current row's remaining width space
-            if (currentShelfY + orient.h <= stock.h && (shelf.currentX + orient.w) <= stock.w && orient.h <= shelf.height) {
-                item.x = shelf.currentX;
-                item.y = currentShelfY;
-                item.finalW = orient.w;
-                item.finalH = orient.h;
-                shelf.placedItems.push(item);
-                shelf.currentX += orient.w + kerf; // step forward past cut line margin
-                return true;
+        for (let rect of sheet.freeRects) {
+            if (orient.w > rect.w || orient.h > rect.h) continue;
+
+            const rightMargin = (rect.x + orient.w < sheet.stock.w ? kerf : 0);
+            const bottomMargin = (rect.y + orient.h < sheet.stock.h ? kerf : 0);
+            const usedWidth = orient.w + rightMargin;
+            const usedHeight = orient.h + bottomMargin;
+            if (usedWidth > rect.w || usedHeight > rect.h) continue;
+
+            const waste = rect.w * rect.h - (usedWidth * usedHeight);
+            const fitScore = waste + rect.w + rect.h;
+            if (!bestPlacement || fitScore < bestPlacement.fitScore) {
+                bestPlacement = { rect, orient, usedWidth, usedHeight, fitScore };
             }
-            currentShelfY += shelf.height + kerf;
-        }
-
-        // If no existing row has width room, evaluate creating a new shelf below them
-        if (currentShelfY + orient.h <= stock.h) {
-            let newShelf = {
-                height: orient.h,
-                currentX: orient.w + kerf,
-                placedItems: [item]
-            };
-            item.x = 0;
-            item.y = currentShelfY;
-            item.finalW = orient.w;
-            item.finalH = orient.h;
-            sheet.shelves.push(newShelf);
-            return true;
         }
     }
-    return false;
+
+    if (!bestPlacement) return false;
+
+    const { rect, orient, usedWidth, usedHeight } = bestPlacement;
+    item.x = rect.x;
+    item.y = rect.y;
+    item.finalW = orient.w;
+    item.finalH = orient.h;
+    item.rotated = orient.rotated;
+    sheet.placedItems.push(item);
+
+    const usedRect = {
+        x: rect.x,
+        y: rect.y,
+        w: usedWidth,
+        h: usedHeight
+    };
+
+    sheet.freeRects = sheet.freeRects.flatMap(freeRect => splitFreeRectangles(freeRect, usedRect));
+    sheet.freeRects = pruneFreeRectangles(sheet.freeRects);
+    return true;
 }
 
+function splitFreeRectangles(freeRect, usedRect) {
+    if (usedRect.x >= freeRect.x + freeRect.w || usedRect.x + usedRect.w <= freeRect.x || usedRect.y >= freeRect.y + freeRect.h || usedRect.y + usedRect.h <= freeRect.y) {
+        return [freeRect];
+    }
 
-//  canvas drawing.............................................................................
-function drawSheetDiagram(canvas, sheet, stock, scale, kerf = 2) {
+    const rects = [];
+    if (usedRect.x > freeRect.x) {
+        rects.push({
+            x: freeRect.x,
+            y: freeRect.y,
+            w: usedRect.x - freeRect.x,
+            h: freeRect.h
+        });
+    }
+    if (usedRect.x + usedRect.w < freeRect.x + freeRect.w) {
+        rects.push({
+            x: usedRect.x + usedRect.w,
+            y: freeRect.y,
+            w: freeRect.x + freeRect.w - (usedRect.x + usedRect.w),
+            h: freeRect.h
+        });
+    }
+    if (usedRect.y > freeRect.y) {
+        rects.push({
+            x: freeRect.x,
+            y: freeRect.y,
+            w: freeRect.w,
+            h: usedRect.y - freeRect.y
+        });
+    }
+    if (usedRect.y + usedRect.h < freeRect.y + freeRect.h) {
+        rects.push({
+            x: freeRect.x,
+            y: usedRect.y + usedRect.h,
+            w: freeRect.w,
+            h: freeRect.y + freeRect.h - (usedRect.y + usedRect.h)
+        });
+    }
+
+    return rects.filter(r => r.w > 0 && r.h > 0);
+}
+function rectContains(a, b) {
+    return a.x <= b.x && a.y <= b.y && a.x + a.w >= b.x + b.w && a.y + a.h >= b.y + b.h;
+}
+function pruneFreeRectangles(rects) {
+    const result = [...rects];
+    for (let i = result.length - 1; i >= 0; i--) {
+        for (let j = 0; j < result.length; j++) {
+            if (i !== j && rectContains(result[j], result[i])) {
+                result.splice(i, 1);
+                break;
+            }
+        }
+    }
+    return result;
+}
+function drawSheetDiagram(canvas, sheet, scale, kerf = 2) {
     const ctx = canvas.getContext('2d');
-    
-    // Background - Base layout setup
     ctx.fillStyle = "#f5f5f5";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+    ctx.strokeStyle = "#333";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(0, 0, canvas.width, canvas.height);
     ctx.textBaseline = "middle";
     ctx.textAlign = "center";
 
-    let currentShelfY = 0;
-
-    // 1. Loop through shelf rows to draw items and track empty end-of-row spaces
-    sheet.shelves.forEach((shelf, shelfIndex) => {
-        // Draw the placed item panels inside this row
-        shelf.placedItems.forEach(item => {
-            const rx = item.x * scale;
-            const ry = item.y * scale;
-            const rw = item.finalW * scale;
-            const rh = item.finalH * scale;
-
-            // Draw cut item panel
-            ctx.fillStyle = "#bbdefb";
-            ctx.fillRect(rx, ry, rw, rh);
-            
-            ctx.strokeStyle = "#0d47a1";
-            ctx.lineWidth = 1;
-            ctx.strokeRect(rx, ry, rw, rh);
-
-            // Print item text details (Centered)
-            const centerX = rx + (rw / 2);
-            const centerY = ry + (rh / 2);
-            if (rw > 40 && rh > 20) {
-                ctx.fillStyle = "#000000";
-                ctx.font = "bold 10px Arial";
-                ctx.fillText(item.label, centerX, centerY - 6);
-                ctx.font = "10px Arial";
-                ctx.fillText(`${Math.round(item.finalW)}x${Math.round(item.finalH)}`, centerX, centerY + 6);
-            }
-        });
-
-        // Calculate trailing scrap area remaining at the right end of this specific shelf
-        // shelf.currentX already includes the final item width plus any trailing kerf space
-        let shelfUsedWidth = shelf.currentX; 
-        let scrapW = stock.w - shelfUsedWidth;
-        let scrapH = shelf.height;
-
-        if (scrapW > 0 && scrapH > 0) {
-            const sx = shelfUsedWidth * scale;
-            const sy = currentShelfY * scale;
-            const sw = scrapW * scale;
-            const sh = scrapH * scale;
-
-            // Draw row scrap placeholder box (Darker Grey)
-            ctx.fillStyle = "#e0e0e0";
-            ctx.fillRect(sx, sy, sw, sh);
-            ctx.strokeStyle = "#9e9e9e";
-            ctx.lineWidth = 1;
-            ctx.strokeRect(sx, sy, sw, sh);
-
-            // Print the structural dimensions of this row scrap piece if it fits the text box
-            if (sw > 50 && sh > 15) {
-                ctx.fillStyle = "#666666";
-                ctx.font = "italic 10px Arial";
-                ctx.fillText(`${Math.round(scrapW)}x${Math.round(scrapH)}`, sx + (sw / 2), sy + (sh / 2));
-            }
-        }
-        // Increment row track pointer position (Matches packing algorithm layer height stack logic)
-        // Note: If your algorithm adds kerf between shelves, add it here as well
-        currentShelfY += shelf.height; 
-    });
-
-    // 2. Calculate and label large unallocated open scrap block at the bottom of the sheet
-    let bottomScrapW = stock.w;
-    let bottomScrapH = stock.h - currentShelfY;
-
-    if (bottomScrapH > 0 && bottomScrapW > 0) {
-        const bx = 0;
-        const by = currentShelfY * scale;
-        const bw = bottomScrapW * scale;
-        const bh = bottomScrapH * scale;
-
-        // Draw bottom main scrap box
-        ctx.fillStyle = "#dcdcdc";
-        ctx.fillRect(bx, by, bw, bh);
+    sheet.freeRects.forEach(rect => {
+        const rx = rect.x * scale;
+        const ry = rect.y * scale;
+        const rw = rect.w * scale;
+        const rh = rect.h * scale;
+        ctx.fillStyle = "#e0e0e0";
+        ctx.fillRect(rx, ry, rw, rh);
         ctx.strokeStyle = "#9e9e9e";
         ctx.lineWidth = 1;
-        ctx.strokeRect(bx, by, bw, bh);
-
-        // Print structural dimensions of the large bottom scrap zone
-        if (bw > 50 && bh > 15) {
-            ctx.fillStyle = "#555555";
-            ctx.font = "italic bold 11px Arial";
-            ctx.fillText(`Scrap: ${Math.round(bottomScrapW)} x ${Math.round(bottomScrapH)} mm`, bx + (bw / 2), by + (bh / 2));
+        ctx.strokeRect(rx, ry, rw, rh);
+        if (rw > 40 && rh > 15) {
+            ctx.fillStyle = "#666666";
+            ctx.font = "italic 10px Arial";
+            ctx.fillText(`${Math.round(rect.w)}x${Math.round(rect.h)}`, rx + rw / 2, ry + rh / 2);
         }
-    }
+    });
+
+    sheet.placedItems.forEach(item => {
+        const rx = item.x * scale;
+        const ry = item.y * scale;
+        const rw = item.finalW * scale;
+        const rh = item.finalH * scale;
+        ctx.fillStyle = "#bbdefb";
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeStyle = "#0d47a1";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(rx, ry, rw, rh);
+        const centerX = rx + rw / 2;
+        const centerY = ry + rh / 2;
+        if (rw > 40 && rh > 20) {
+            ctx.fillStyle = "#000000";
+            ctx.font = "bold 10px Arial";
+            ctx.fillText(item.label, centerX, centerY - 6);
+            ctx.font = "10px Arial";
+            ctx.fillText(`${Math.round(item.finalW)}x${Math.round(item.finalH)}`, centerX, centerY + 6);
+        }
+    });
 }
-
-
 </script>
 </body>
 </html>
