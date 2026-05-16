@@ -4,180 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Toilet Cubicle Partition Calculator</title>
-    <style>
-        :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg-main: #0a3764;
-            --bg-card: #dacccc;
-            --text-dark: #1e293b;
-            --border-color: #cbd5e1;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-dark);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 900px;
-            background: var(--bg-card);
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-        }
-
-        h1 {
-            margin-top: 0;
-            color: #0f172a;
-            font-size: 24px;
-            border-bottom: 2px solid #e2e8f0;
-            padding-bottom: 15px;
-        }
-
-        .layout-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 30px;
-        }
-
-        @media (max-width: 768px) {
-            .layout-grid { grid-template-columns: 1fr; }
-        }
-
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 6px;
-            font-size: 14px;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-size: 15px;
-            box-sizing: border-box;
-            background-color: #fff;
-        }
-
-        input:focus, select:focus {
-            outline: 2px solid var(--primary);
-            border-color: transparent;
-        }
-
-        .results-panel {
-            background-color: #f1f5f9;
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 5px solid var(--primary);
-        }
-
-        .results-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-top: 0;
-            margin-bottom: 15px;
-            color: #0f172a;
-        }
-
-        .kpi-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .kpi-card {
-            background: var(--bg-card);
-            padding: 15px;
-            border-radius: 6px;
-            text-align: center;
-            border: 1px solid #e2e8f0;
-        }
-
-        .kpi-val {
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--primary);
-        }
-
-        .kpi-lbl {
-            font-size: 12px;
-            color: #64748b;
-            margin-top: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .matrix-box, .order-box {
-            background: var(--bg-card);
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid #e2e8f0;
-            margin-bottom: 15px;
-        }
-
-        .matrix-box h3, .order-box h3 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            font-size: 15px;
-            color: #475569;
-            border-bottom: 1px solid #f1f5f9;
-            padding-bottom: 5px;
-        }
-
-        ul {
-            margin: 0;
-            padding-left: 20px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .alert-error {
-            background-color: #fef2f2;
-            color: #991b1b;
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid #fca5a5;
-            margin-bottom: 20px;
-            font-size: 14px;
-            display: none;
-        }
-
-        .order-highlight {
-            font-size: 20px;
-            font-weight: 700;
-            color: #16a34a;
-        }
-    </style>
+    <link rel="stylesheet" href="cstyle.css">
 </head>
 <body>
 <div class="container">
  <button><a href="index.html">hpl calculate</a></button>
     <h1> Cubicle Partition calculator</h1>
     <div class="layout-grid">
-        <!-- Input Section -->
-        <div>
+        <div class="input-panel">
+            <!-- Input Section -->
             <div class="form-group">
-                <label for="numStalls">Number of cubicle</label>
-                <input type="number" id="numStalls" value="4" min="1" max="20">
-            </div>
-            <div class="form-group">
-                <label for="totalWidth">Total Front Wall Width (mm)</label>
-                <input type="number" id="totalWidth" value="3600" min="1000">
+                <label for="numStalls">Select Item</label>
+              <select name="item" id="item">
+                    <option value="item1">CUBICLE</option>
+                    <option value="item2">URINAL</option>
+                    <OPTION value="item3">LOCKER</OPTION>
+                </select>
             </div>
             <div class="form-group">
                 <label for="wall">wall</label>
@@ -186,40 +28,38 @@
                     <option value="c">Cwall</option>
                 </select>
             </div>
+        
             <div class="form-group">
-                <label for="depth">Cubicle Depth (mm)</label>
-                <input type="number" id="depth" value="1500" min="500">
+                <label for="numStalls">Number of cubicle</label>
+                <input type="number" id="numStalls" value="4" min="1" max="20">
+            </div>
+              <div class="form-group">
+                <label for="totalwidth">Area width (mm)</label>
+                <input type="number" id="totalwidth" value="2000" min="1000">
             </div>
             <div class="form-group">
-                <label for="doorWidth">Standard Door Opening Width (mm)</label>
+                <label for="dividerHeight">Divider height (mm)</label>
+                <input type="number" id="dividerHeight" value="1790" min="1000">
+            </div>
+             <div class="form-group">
+                <label for="depth">Divider Depth (mm)</label>
+                <input type="number" id="depth" value="1500" min="500">
+            </div>
+             <div class="form-group">
+                <label for="doorHeight">Door Height (mm)</label>
+                <input type="number" id="doorHeight" value="1790" min="1000">
+            </div>
+             <div class="form-group">
+                <label for="doorWidth"> Door  Width (mm)</label>
                 <input type="number" id="doorWidth" value="600" min="400">
             </div>
             <div class="form-group">
-                <label for="boardW">Master Sheet Width (mm)</label>
-                <select id="boardW">
-                    <option value="1220">3670 mm (12 feet)</option>
-                    <option value="1530">4300 mm (14 feet)</option>
-                    <option value="1830">2438 mm (8 feet)</option>
-    const sheet12x6 = (3670 * 1860); // mm2
-    const sheet14x6 = (4300 * 1860); // mm2
-    const sheet8x6 =(2438.4 * 1828.8); //mm2
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="boardH">Master Sheet Height / System Height (mm)</label>
-                <select id="boardH">
-                    <option value="1830">1860 mm (6 feet)</option>
-                    <option value="2130">1828.8 mm (6 feet)</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="wastage">Nesting Wastage Factor (%)</label>
-                <input type="number" id="wastage" value="15" min="0" max="100">
+                <label for="pilasterHeight">Pilaster Height (mm)</label>
+                <input type="number" id="pilasterHeight" value="1830" min="1000">
             </div>
         </div>
-
         <!-- Output Section -->
-        <div>
+        <div class="output-panel">
             <div id="errorBox" class="alert-error"></div>
             
             <div class="results-panel" id="resultsPanel">
@@ -239,6 +79,10 @@
                         <div class="kpi-val" id="countDoors">0</div>
                         <div class="kpi-lbl">Doors</div>
                     </div>
+                    <div class="kpi-card">
+                        <div class="kpi-val" id="endwall">0</div>
+                        <div class="kpi-lbl">End Wall</div>
+                    </div>
                 </div>
 
                 <!-- Cutting Sizes -->
@@ -248,6 +92,8 @@
                         <li id="sizeDividers"> Dividers: -</li>
                         <li id="sizeDoors">Front Doors: -</li>
                         <li id="sizePilasters">Front Pilasters: -</li>
+                        <li id="sizeEndwalls">End Walls: -</li>
+                        <li id="sizeCubicleWidth">Each Cubicle Width: -</li>
                     </ul>
                 </div>
                 <!-- Material Purchasing Estimates -->
@@ -267,137 +113,165 @@
         </div>
     </div>
 </div>
-
+<canvas id="resultsCanvas">
+</canvas>
 <script>
-    // Gather UI Elements
+    const itemSelect = document.getElementById('item');
+    const wallSelect = document.getElementById('wall');
     const numStallsInput = document.getElementById('numStalls');
-    const totalWidthInput = document.getElementById('totalWidth');
-    const wallSelect =  document.getElementById('wall'); // Maps to your <select name="wall">
+    const totalWidthInput = document.getElementById('totalwidth');
+    const dividerHeightInput = document.getElementById('dividerHeight');
     const depthInput = document.getElementById('depth');
+    const doorHeightInput = document.getElementById('doorHeight');
     const doorWidthInput = document.getElementById('doorWidth');
-    const boardWSelect = document.getElementById('boardW');
-    const boardHSelect = document.getElementById('boardH');
-    const wastageInput = document.getElementById('wastage');
-
+    const pilasterHeightInput = document.getElementById('pilasterHeight');
+    const resultPanel = document.getElementById('resultsPanel');
     const errorBox = document.getElementById('errorBox');
-    const resultsPanel = document.getElementById('resultsPanel');
+    const netAreaEl = document.getElementById('netArea');
+    const grossAreaEl = document.getElementById('grossArea');
+    const rawSheetsEl = document.getElementById('rawSheets');
+    const finalOrderEl = document.getElementById('finalOrder');
 
-    const countDividers = document.getElementById('countDividers');
-    const countPilasters = document.getElementById('countPilasters');
-    const countDoors = document.getElementById('countDoors');
+    const availablesheets = [
+      { name: "12 x 6 feet", width: 3670, height: 1860 },
+      { name: "14 x 6 feet", width: 4300, height: 1830 }
+    ];
 
-    const sizeDividers = document.getElementById('sizeDividers');
-    const sizeDoors = document.getElementById('sizeDoors');
-    const sizePilasters = document.getElementById('sizePilasters');
-
-    const netAreaSpan = document.getElementById('netArea');
-    const grossAreaSpan = document.getElementById('grossArea');
-    const rawSheetsSpan = document.getElementById('rawSheets');
-    const finalOrderSpan = document.getElementById('finalOrder');
-
-    // Computational Core Engine function
-    function calculate() {
-        // Parse numerical raw input parameters
-        const numStalls = parseInt(numStallsInput.value) || 0;
-        const totalWidth = parseFloat(totalWidthInput.value) || 0;
-        const wallType = wallSelect.value; // 'l' for L-wall, 'c' for C-wall
-        const depth = parseFloat(depthInput.value) || 0;
-        const doorWidth = parseFloat(doorWidthInput.value) || 0;
-        const boardW = parseFloat(boardWSelect.value);
-        const boardH = parseFloat(boardHSelect.value);
-        const wastage = (parseFloat(wastageInput.value) || 0) / 100;
-
-        // Validation Rules
-        if (numStalls <= 0 || totalWidth <= 0 || depth <= 0 || doorWidth <= 0) {
-            showError("Please enter values greater than zero for all geometric variables.");
-            return;
+    function init() {
+        if (itemSelect && wallSelect && numStallsInput && totalWidthInput && dividerHeightInput && depthInput && doorHeightInput && doorWidthInput && pilasterHeightInput) {
+            itemSelect.addEventListener('change', calculate);
+            wallSelect.addEventListener('change', calculate);
+            numStallsInput.addEventListener('input', calculate);
+            totalWidthInput.addEventListener('input', calculate);
+            dividerHeightInput.addEventListener('input', calculate);
+            depthInput.addEventListener('input', calculate);
+            doorHeightInput.addEventListener('input', calculate);
+            doorWidthInput.addEventListener('input', calculate);
+            pilasterHeightInput.addEventListener('input', calculate);
         }
 
-        // Structural Component Assignments based on Layout Types
-        let dividers = 0;
-        let pilasters = 0;
-        const doors = numStalls;
-
-        if (wallType === 'l') {
-            // L-Wall: Open on one side. Needs an extra divider/end panel to close the deep side.
-            dividers = (numStalls - 1) + 1; // standard inner dividers + 1 corner deep divider
-            pilasters = numStalls + 1;       // standard inline front pilaster count
-        } else {
-            // C-Wall: Closed between 3 masonry walls. 
-            dividers = numStalls - 1;       // only internal partitions needed
-            pilasters = numStalls + 1;       
+        if (resultPanel) {
+            resultPanel.style.display = 'none';
+        }
+        if (errorBox) {
+            errorBox.style.display = 'none';
         }
 
-        const totalDoorWidth = doors * doorWidth;
-        const remainingSpace = totalWidth - totalDoorWidth;
-
-        // Space Conflict Check
-        if (remainingSpace <= 0) {
-            showError(`🚨 <strong>Layout Conflict:</strong> Combined door widths (${totalDoorWidth}mm) exceed front wall width (${totalWidth}mm). Reduce stall counts or shrink standard doors.`);
-            return;
-        }
-
-        // Clear errors and run final UI panel render using your structural variables
-        hideError();
-        
-        // Front system calculation variables
-        const individualPilasterWidth = remainingSpace / pilasters;
-
-        // UI Component Updates
-        countDividers.textContent = dividers;
-        countPilasters.textContent = pilasters;
-        countDoors.textContent = doors;
-
-        // Display Sizing Matrix
-        sizeDividers.textContent = `Dividers: ${dividers} pcs @ ${depth}mm x ${boardH}mm`;
-        sizeDoors.textContent = `Front Doors: ${doors} pcs @ ${doorWidth}mm x ${boardH}mm`;
-        sizePilasters.textContent = `Front Pilasters: ${pilasters} pcs @ ${individualPilasterWidth.toFixed(1)}mm x ${boardH}mm`;
-
-        // Calculate Surface Areas (m²)
-        const dividerArea = (dividers * depth * boardH) / 1000000;
-        const doorArea = (doors * doorWidth * boardH) / 1000000;
-        const pilasterArea = (pilasters * individualPilasterWidth * boardH) / 1000000;
-        
-        const netArea = dividerArea + doorArea + pilasterArea;
-        const grossArea = netArea * (1 + wastage);
-
-        // Map selection element value back to exact template square millimetres
-        let sheetAreaMm2 = 0;
-        if (boardW === 1220) sheetAreaMm2 = 3670 * 1860;
-        else if (boardW === 1530) sheetAreaMm2 = 4300 * 1860;
-        else if (boardW === 1830) sheetAreaMm2 = 2438.4 * 1828.8;
-        
-        const sheetAreaM2 = sheetAreaMm2 / 1000000;
-        const rawSheets = grossArea / sheetAreaM2;
-        const finalOrder = Math.ceil(rawSheets);
-
-        // Print Order Summary Data
-        netAreaSpan.textContent = netArea.toFixed(2);
-        grossAreaSpan.textContent = grossArea.toFixed(2);
-        rawSheetsSpan.textContent = rawSheets.toFixed(2);
-        finalOrderSpan.textContent = `${finalOrder} Board${finalOrder !== 1 ? 's' : ''}`;
+        calculate();
     }
 
-    // Helper functions for UI Messaging
-    function showError(msg) {
-        errorBox.innerHTML = msg;
-        errorBox.style.display = 'block';
-        resultsPanel.style.opacity = '0.4';
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    function showError(message) {
+        if (errorBox) {
+            errorBox.textContent = message;
+            errorBox.style.display = 'block';
+        }
+        if (resultPanel) {
+            resultPanel.style.display = 'none';
+        }
     }
 
     function hideError() {
-        errorBox.style.display = 'none';
-        errorBox.innerHTML = '';
-        resultsPanel.style.opacity = '1';
+        if (errorBox) {
+            errorBox.style.display = 'none';
+            errorBox.textContent = '';
+        }
     }
 
-    // Attach Event Listeners for Live Recalculations
-    [numStallsInput, totalWidthInput, wallSelect, depthInput, doorWidthInput, boardWSelect, boardHSelect, wastageInput].forEach(element => {
-        if(element) element.addEventListener('input', calculate);
-    });
+    function calculate() {
+        if (!itemSelect || !wallSelect || !numStallsInput || !totalWidthInput || !dividerHeightInput || !depthInput || !doorHeightInput || !doorWidthInput || !pilasterHeightInput) {
+            return;
+        }
 
-    // Run calculation on initial load
-    calculate();
+        const item = itemSelect.value;
+        const wallType = wallSelect.value;
+        const numStalls = parseInt(numStallsInput.value, 10);
+        const totalWidth = parseFloat(totalWidthInput.value);
+        const dividerHeight = parseFloat(dividerHeightInput.value);
+        const depth = parseFloat(depthInput.value);
+        const doorHeight = parseFloat(doorHeightInput.value);
+        const doorWidth = parseFloat(doorWidthInput.value);
+        const pilasterHeight = parseFloat(pilasterHeightInput.value);
+
+        if (isNaN(numStalls) || isNaN(totalWidth) || isNaN(dividerHeight) || isNaN(depth) || isNaN(doorHeight) || isNaN(doorWidth) || isNaN(pilasterHeight)) {
+            showError('Please enter valid numeric values for all fields.');
+            return;
+        }
+
+        if (numStalls < 1 || totalWidth < 1000 || dividerHeight < 1000 || depth < 500 || doorHeight < 1000 || doorWidth < 400 || pilasterHeight < 1000) {
+            showError('Please ensure all values meet the minimum requirements.');
+            return;
+        }
+
+        hideError();
+
+        const cubicleWidth = totalWidth / numStalls;
+        const countDividers = Math.max(0, numStalls - 1);
+        const countDoors = numStalls;
+        const countPilasters = numStalls + 1;
+        const endWalls = wallType === 'c' ? 0 : 1;
+
+        const dividerArea = countDividers * dividerHeight * depth;
+        const doorArea = countDoors * doorHeight * doorWidth;
+        const pilasterArea = countPilasters * pilasterHeight * depth;
+        const endwallArea = endWalls * dividerHeight * depth;
+        const netArea = (dividerArea + doorArea + pilasterArea + endwallArea) / 1_000_000;
+        const wasteFactor = 1.10;
+        const grossArea = netArea * wasteFactor;
+
+        const sheetOptions = availablesheets.map(sheet => {
+            const sheetArea = (sheet.width * sheet.height) / 1_000_000;
+            return {
+                sheet,
+                boards: Math.ceil(grossArea / sheetArea),
+                sheetArea
+            };
+        });
+
+        const bestSheet = sheetOptions.reduce((best, option) => {
+            if (!best || option.boards < best.boards || (option.boards === best.boards && option.sheetArea > best.sheetArea)) {
+                return option;
+            }
+            return best;
+        }, null);
+
+        document.getElementById('countDividers').textContent = countDividers;
+        document.getElementById('countPilasters').textContent = countPilasters;
+        document.getElementById('countDoors').textContent = countDoors;
+        document.getElementById('endwall').textContent = endWalls;
+
+        document.getElementById('sizeDividers').textContent = `Dividers: ${dividerHeight}mm x ${depth}mm`;
+        document.getElementById('sizeDoors').textContent = `Front Doors: ${doorHeight}mm x ${doorWidth}mm`;
+        document.getElementById('sizePilasters').textContent = `Front Pilasters: ${pilasterHeight}mm x ${depth}mm`;
+        document.getElementById('sizeEndwalls').textContent = `End Walls: ${dividerHeight}mm x ${depth}mm`;
+        document.getElementById('sizeCubicleWidth').textContent = `Each Cubicle Width: ${cubicleWidth.toFixed(0)}mm`;
+
+        if (netAreaEl) netAreaEl.textContent = netArea.toFixed(2);
+        if (grossAreaEl) grossAreaEl.textContent = grossArea.toFixed(2);
+        if (rawSheetsEl) rawSheetsEl.textContent = bestSheet ? `${bestSheet.boards}` : '0.00';
+        if (finalOrderEl) {
+            finalOrderEl.textContent = bestSheet ? `${bestSheet.boards} x ${bestSheet.sheet.name}` : '0 Boards';
+        }
+
+        if (resultPanel) {
+            resultPanel.style.display = 'block';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+    function drawResults() {
+        const canvas = document.getElementById('resultsCanvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Placeholder for future visualizations
+        }
+    }
 </script>
 
 </body>

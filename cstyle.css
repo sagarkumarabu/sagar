@@ -1,0 +1,160 @@
+
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-main: #0a3764;
+            --bg-card: #dacccc;
+            --text-dark: #1e293b;
+            --border-color: #cbd5e1;
+        }
+        *{margin:0; padding:0; box-sizing:border-box;}
+        body {
+            font-family: -apple-system, 
+            BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+        h1 {
+            margin-top: 0;
+            color: #0f172a;
+            font-size: 24px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 40% 40%;
+            gap: 5px;
+            margin-bottom: 5px;
+            width: 100%;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .layout-grid { grid-template-columns: 1fr; }
+        }
+
+        .input-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .output-panel {
+            width: 100%;
+            margin-left: 20%;
+        }
+
+        .form-group {
+            margin-bottom: 5px;
+        }
+
+        label {
+            display: inline;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin: 0;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 15px;
+            background-color: #fff;
+        }
+
+        input:focus, select:focus {
+            outline: 2px solid var(--primary);
+            border-color: transparent;
+        }
+
+        .results-panel {
+            background-color: #f1f5f9;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 5px solid var(--primary);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .results-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #0f172a;
+        }
+
+        .kpi-row {
+            display: inline-grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+        .kpi-val {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .kpi-lbl {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .matrix-box, .order-box {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 15px;
+        }
+        .matrix-box h3, .order-box h3
+         { margin:0 0 10px 0; font-size:15px; 
+            color:#475569; border-bottom:1px solid #f1f5f9;
+             padding-bottom:5px; }
+        ul {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .alert-error {
+            background-color: #fef2f2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #fca5a5;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        .order-highlight {
+            font-size: 20px;
+            font-weight: 700;
+            color: #16a34a;
+        }
+    
